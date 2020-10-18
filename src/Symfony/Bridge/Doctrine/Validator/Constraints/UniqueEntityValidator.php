@@ -112,9 +112,17 @@ class UniqueEntityValidator extends ConstraintValidator
         $criteria = [];
         $hasNullValue = false;
 
-        foreach ($fields as $fieldName) {
-            if (!$class->hasField($fieldName) && !$class->hasAssociation($fieldName)) {
-                throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $fieldName));
+        foreach ($fields as $objectFieldName => $entityFieldName) {
+            if (!$class->hasField($entityFieldName) && !$class->hasAssociation($entityFieldName)) {
+                throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $entityFieldName));
+            }
+
+            $fieldName = is_int($objectFieldName) ? $entityFieldName : $objectFieldName;
+            if (!$isEntity) {
+                $reflectionObject = new \ReflectionObject($entity);
+                if (!$reflectionObject->hasProperty($fieldName)) {
+                    throw new ConstraintDefinitionException(sprintf('The field "%s" is not a property of class "%s".', $fieldName, \get_class($entity)));
+                }
             }
 
             $field = new \ReflectionProperty(\get_class($entity), $fieldName);
@@ -131,14 +139,14 @@ class UniqueEntityValidator extends ConstraintValidator
                 continue;
             }
 
-            $criteria[$fieldName] = $fieldValue;
+            $criteria[$entityFieldName] = $fieldValue;
 
-            if (null !== $criteria[$fieldName] && $class->hasAssociation($fieldName)) {
+            if (null !== $criteria[$entityFieldName] && $class->hasAssociation($entityFieldName)) {
                 /* Ensure the Proxy is initialized before using reflection to
                  * read its identifiers. This is necessary because the wrapped
                  * getter methods in the Proxy are being bypassed.
                  */
-                $em->initializeObject($criteria[$fieldName]);
+                $em->initializeObject($criteria[$entityFieldName]);
             }
         }
 
@@ -195,8 +203,8 @@ class UniqueEntityValidator extends ConstraintValidator
             return;
         }
 
-        $errorPath = $constraint->errorPath ?? $fields[0];
-        $invalidValue = $criteria[$errorPath] ?? $criteria[$fields[0]];
+        $errorPath = $constraint->errorPath ?? current($fields);
+        $invalidValue = $criteria[$errorPath] ?? $criteria[current($fields)];
 
         $this->context->buildViolation($constraint->message)
             ->atPath($errorPath)
