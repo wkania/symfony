@@ -26,6 +26,7 @@ use Symfony\Bridge\Doctrine\Tests\Fixtures\CompositeObjectNoToStringIdEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\DoubleNameEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\DoubleNullableNameEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\Employee;
+use Symfony\Bridge\Doctrine\Tests\Fixtures\HireAnEmployee;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\Person;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleIntIdEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleIntIdNoToStringEntity;
@@ -930,5 +931,39 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
                 }
             }],
         ];
+    }
+
+    public function testValidateDTOUniqueness()
+    {
+        $constraint = new UniqueEntity([
+            'message' => 'myMessage',
+            'fields' => ['name'],
+            'em' => self::EM_NAME,
+            'entityClass' => 'Symfony\Bridge\Doctrine\Tests\Fixtures\Person',
+        ]);
+
+        $entity = new Person(1, 'Foo');
+        $dto = new HireAnEmployee('Foo');
+
+        $this->validator->validate($entity, $constraint);
+
+        $this->assertNoViolation();
+
+        $this->em->persist($entity);
+        $this->em->flush();
+
+        $this->validator->validate($entity, $constraint);
+
+        $this->assertNoViolation();
+
+        $this->validator->validate($dto, $constraint);
+
+        $this->buildViolation('myMessage')
+            ->atPath('property.path.name')
+            ->setInvalidValue('Foo')
+            ->setCode('23bd9dbf-6b9b-41cd-a99e-4844bcf3077f')
+            ->setCause([$entity])
+            ->setParameters(['{{ value }}' => '"Foo"'])
+            ->assertRaised();
     }
 }
