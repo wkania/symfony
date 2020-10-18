@@ -11,6 +11,7 @@
 
 namespace Symfony\Bridge\Doctrine\Validator\Constraints;
 
+use Doctrine\ORM\Mapping\MappingException;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
@@ -68,6 +69,8 @@ class UniqueEntityValidator extends ConstraintValidator
             throw new UnexpectedValueException($entity, 'object');
         }
 
+        $entityClass = \get_class($entity);
+
         if ($constraint->em) {
             $em = $this->registry->getManager($constraint->em);
 
@@ -75,14 +78,36 @@ class UniqueEntityValidator extends ConstraintValidator
                 throw new ConstraintDefinitionException(sprintf('Object manager "%s" does not exist.', $constraint->em));
             }
         } else {
-            $em = $this->registry->getManagerForClass(\get_class($entity));
+            $em = $this->registry->getManagerForClass($entityClass);
 
             if (!$em) {
                 throw new ConstraintDefinitionException(sprintf('Unable to find the object manager associated with an entity of class "%s".', get_debug_type($entity)));
             }
         }
 
-        $class = $em->getClassMetadata(\get_class($entity));
+        try {
+            $repository = $em->getRepository($entityClass);
+            $isEntity = true;
+        }catch (MappingException $e) {
+            $isEntity = false;
+        }
+
+        if (null !== $constraint->entityClass) {
+            /* Retrieve repository from given entity name.
+             * We ensure the retrieved repository can handle the entity
+             * by checking the entity is the same, or subclass of the supported entity.
+             */
+            $repository = $em->getRepository($constraint->entityClass);
+            $supportedClass = $repository->getClassName();
+
+            if ($isEntity && !$entity instanceof $supportedClass) {
+                $class = $em->getClassMetadata($entityClass);
+                throw new ConstraintDefinitionException(sprintf('The "%s" entity repository does not support the "%s" entity. The entity should be an instance of or extend "%s".', $constraint->entityClass, $class->getName(), $supportedClass));
+            }
+            $entityClass = $constraint->entityClass;
+        }
+
+        $class = $em->getClassMetadata($entityClass);
 
         $criteria = [];
         $hasNullValue = false;
@@ -92,7 +117,11 @@ class UniqueEntityValidator extends ConstraintValidator
                 throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $fieldName));
             }
 
-            $fieldValue = $class->reflFields[$fieldName]->getValue($entity);
+            $field = new \ReflectionProperty(\get_class($entity), $fieldName);
+            if (!$field->isPublic()) {
+                $field->setAccessible(true);
+            }
+            $fieldValue = $field->getValue($entity);
 
             if (null === $fieldValue) {
                 $hasNullValue = true;
@@ -122,21 +151,6 @@ class UniqueEntityValidator extends ConstraintValidator
         // "ignoreNull" option is enabled and fields to be checked are null
         if (empty($criteria)) {
             return;
-        }
-
-        if (null !== $constraint->entityClass) {
-            /* Retrieve repository from given entity name.
-             * We ensure the retrieved repository can handle the entity
-             * by checking the entity is the same, or subclass of the supported entity.
-             */
-            $repository = $em->getRepository($constraint->entityClass);
-            $supportedClass = $repository->getClassName();
-
-            if (!$entity instanceof $supportedClass) {
-                throw new ConstraintDefinitionException(sprintf('The "%s" entity repository does not support the "%s" entity. The entity should be an instance of or extend "%s".', $constraint->entityClass, $class->getName(), $supportedClass));
-            }
-        } else {
-            $repository = $em->getRepository(\get_class($entity));
         }
 
         $arguments = [$criteria];
