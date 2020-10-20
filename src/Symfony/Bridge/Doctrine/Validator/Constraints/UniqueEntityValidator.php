@@ -112,25 +112,9 @@ class UniqueEntityValidator extends ConstraintValidator
         $criteria = [];
         $hasNullValue = false;
 
-        foreach ($fields as $objectFieldName => $entityFieldName) {
-            if (!$class->hasField($entityFieldName) && !$class->hasAssociation($entityFieldName)) {
-                throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $entityFieldName));
-            }
+        $fieldValues = $this->getFieldValues($entity, $class, $fields, $isEntity);
 
-            $fieldName = is_int($objectFieldName) ? $entityFieldName : $objectFieldName;
-            if (!$isEntity) {
-                $reflectionObject = new \ReflectionObject($entity);
-                if (!$reflectionObject->hasProperty($fieldName)) {
-                    throw new ConstraintDefinitionException(sprintf('The field "%s" is not a property of class "%s".', $fieldName, \get_class($entity)));
-                }
-            }
-
-            $field = new \ReflectionProperty(\get_class($entity), $fieldName);
-            if (!$field->isPublic()) {
-                $field->setAccessible(true);
-            }
-            $fieldValue = $field->getValue($entity);
-
+        foreach ($fieldValues as $entityFieldName => $fieldValue) {
             if (null === $fieldValue) {
                 $hasNullValue = true;
             }
@@ -203,6 +187,43 @@ class UniqueEntityValidator extends ConstraintValidator
             return;
         }
 
+        /* If a single entity matched the query criteria, which is the same as
+         * the entity being updated by validated object, the criteria is unique.
+         */
+        if (!$isEntity && !empty($constraint->identifierFieldNames) && 1 === \count($result)) {
+            if (!\is_array($constraint->identifierFieldNames) && !\is_string($constraint->identifierFieldNames)) {
+                throw new UnexpectedTypeException($constraint->identifierFieldNames, 'array');
+            }
+
+            $identifierFieldNames = (array) $constraint->identifierFieldNames;
+
+            $fieldValues = $this->getFieldValues($entity, $class, $identifierFieldNames);
+            if (array_values($class->getIdentifierFieldNames()) != array_values($identifierFieldNames)) {
+                throw new ConstraintDefinitionException(
+                    sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $constraint->entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames))
+                );
+            }
+
+            $entityMatched = true;
+
+            foreach ($identifierFieldNames as $identifierFieldName) {
+                $field = new \ReflectionProperty($constraint->entityClass, $identifierFieldName);
+                if (!$field->isPublic()) {
+                    $field->setAccessible(true);
+                }
+
+                $propertyValue = $this->getPropertyValue($constraint->entityClass, $identifierFieldName, current($result));
+                if ($fieldValues[$identifierFieldName] !== $propertyValue) {
+                    $entityMatched = false;
+                    break;
+                }
+            }
+
+            if ($entityMatched) {
+                return;
+            }
+        }
+
         $errorPath = $constraint->errorPath ?? current($fields);
         $invalidValue = $criteria[$errorPath] ?? $criteria[current($fields)];
 
@@ -253,5 +274,42 @@ class UniqueEntityValidator extends ConstraintValidator
         });
 
         return sprintf('object("%s") identified by (%s)', $idClass, implode(', ', $identifiers));
+    }
+
+    public function getFieldValues($object,  ClassMetadata $class, array $fields, bool $isEntity = false): array
+    {
+        if (!$isEntity) {
+            $reflectionObject = new \ReflectionObject($object);
+        }
+
+        $fieldValues = [];
+        $objectClass = \get_class($object);
+
+        foreach ($fields as $objectFieldName => $entityFieldName) {
+            if (!$class->hasField($entityFieldName) && !$class->hasAssociation($entityFieldName)) {
+                throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $entityFieldName));
+            }
+
+            $fieldName = is_int($objectFieldName) ? $entityFieldName : $objectFieldName;
+            if (!$isEntity) {
+                if (!$reflectionObject->hasProperty($fieldName)) {
+                    throw new ConstraintDefinitionException(sprintf('The field "%s" is not a property of class "%s".', $fieldName, $objectClass));
+                }
+            }
+
+            $fieldValues[$entityFieldName] = $this->getPropertyValue($objectClass, $fieldName, $object);
+        }
+
+        return $fieldValues;
+    }
+
+    public function getPropertyValue($class, $name, $object)
+    {
+        $property = new \ReflectionProperty($class, $name);
+        if (!$property->isPublic()) {
+            $property->setAccessible(true);
+        }
+
+        return $property->getValue($object);
     }
 }

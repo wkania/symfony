@@ -38,6 +38,7 @@ class UniqueEntity extends Constraint
     public $fields = [];
     public $errorPath = null;
     public $ignoreNull = true;
+    public $identifierFieldNames = [];
 
     /**
      * @deprecated since Symfony 6.1, use const ERROR_NAMES instead
