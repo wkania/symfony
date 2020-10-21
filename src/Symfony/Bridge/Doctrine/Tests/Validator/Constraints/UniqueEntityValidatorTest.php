@@ -1012,6 +1012,21 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
         $this->validator->validate($dto, $constraint);
     }
 
+    public function testInvalidateEntityFieldName()
+    {
+        $this->expectException('Symfony\Component\Validator\Exception\ConstraintDefinitionException');
+        $this->expectExceptionMessage('The field "name2" is not mapped by Doctrine, so it cannot be validated for uniqueness.');
+        $constraint = new UniqueEntity([
+            'message' => 'myMessage',
+            'fields' => ['name2'],
+            'em' => self::EM_NAME,
+            'entityClass' => 'Symfony\Bridge\Doctrine\Tests\Fixtures\SingleStringIdEntity',
+        ]);
+
+        $dto = new HireAnEmployee('Foo');
+        $this->validator->validate($dto, $constraint);
+    }
+
     public function testValidateDTOUniquenessWhenUpdatingEntity()
     {
         $constraint = new UniqueEntity([
