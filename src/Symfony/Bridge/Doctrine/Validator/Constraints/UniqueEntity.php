@@ -59,6 +59,7 @@ class UniqueEntity extends Constraint
         string $repositoryMethod = null,
         string $errorPath = null,
         bool $ignoreNull = null,
+        $identifierFieldNames = null,
         array $groups = null,
         $payload = null,
         array $options = []
@@ -78,6 +79,7 @@ class UniqueEntity extends Constraint
         $this->repositoryMethod = $repositoryMethod ?? $this->repositoryMethod;
         $this->errorPath = $errorPath ?? $this->errorPath;
         $this->ignoreNull = $ignoreNull ?? $this->ignoreNull;
+        $this->identifierFieldNames = $identifierFieldNames ?? $this->identifierFieldNames;
     }
 
     public function getRequiredOptions(): array
