@@ -91,7 +91,7 @@ class UniqueEntityValidator extends ConstraintValidator
         try {
             $repository = $em->getRepository($entityClass);
             $isEntity = true;
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             $isEntity = false;
         }
 
@@ -202,9 +202,7 @@ class UniqueEntityValidator extends ConstraintValidator
 
             $fieldValues = $this->getFieldValues($object, $class, $identifierFieldNames);
             if (array_values($class->getIdentifierFieldNames()) != array_values($identifierFieldNames)) {
-                throw new ConstraintDefinitionException(
-                    sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $constraint->entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames))
-                );
+                throw new ConstraintDefinitionException(sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $constraint->entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames)));
             }
 
             $entityMatched = true;
@@ -293,7 +291,7 @@ class UniqueEntityValidator extends ConstraintValidator
                 throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $entityFieldName));
             }
 
-            $fieldName = is_int($objectFieldName) ? $entityFieldName : $objectFieldName;
+            $fieldName = \is_int($objectFieldName) ? $entityFieldName : $objectFieldName;
             if (!$isEntity) {
                 if (!$reflectionObject->hasProperty($fieldName)) {
                     throw new ConstraintDefinitionException(sprintf('The field "%s" is not a property of class "%s".', $fieldName, $objectClass));
