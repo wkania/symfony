@@ -1067,7 +1067,7 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
             'identifierFieldNames' => ['id1', 'id2'],
         ]);
 
-        $entity = new CompositeIntIdEntity(1, 2,'Foo');
+        $entity = new CompositeIntIdEntity(1, 2, 'Foo');
 
         $this->em->persist($entity);
         $this->em->flush();
@@ -1101,7 +1101,7 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
         $this->em->persist($entity);
         $this->em->flush();
 
-        $dto = new UpdateCompositeObjectNoToStringIdEntity($objectOne, $objectTwo,'Foo');
+        $dto = new UpdateCompositeObjectNoToStringIdEntity($objectOne, $objectTwo, 'Foo');
 
         $this->validator->validate($dto, $constraint);
 
@@ -1132,7 +1132,7 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
         $this->em->persist($entity);
         $this->em->flush();
 
-        $dto = new UpdateCompositeObjectNoToStringIdEntity($objectOne, $objectTwo,'Foo');
+        $dto = new UpdateCompositeObjectNoToStringIdEntity($objectOne, $objectTwo, 'Foo');
         $this->validator->validate($dto, $constraint);
     }
 }

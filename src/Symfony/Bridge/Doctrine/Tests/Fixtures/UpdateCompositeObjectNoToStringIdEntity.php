@@ -27,7 +27,7 @@ class UpdateCompositeObjectNoToStringIdEntity
 
     public function __construct(SingleIntIdNoToStringEntity $object1, SingleIntIdNoToStringEntity $object2, $name)
     {
-        $this->object1= $object1;
+        $this->object1 = $object1;
         $this->object2 = $object2;
         $this->name = $name;
     }

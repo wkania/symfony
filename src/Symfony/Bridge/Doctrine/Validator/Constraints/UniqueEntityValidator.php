@@ -279,7 +279,7 @@ class UniqueEntityValidator extends ConstraintValidator
         return sprintf('object("%s") identified by (%s)', $idClass, implode(', ', $identifiers));
     }
 
-    public function getFieldValues($object,  ClassMetadata $class, array $fields, bool $isEntity = false): array
+    public function getFieldValues($object, ClassMetadata $class, array $fields, bool $isEntity = false): array
     {
         if (!$isEntity) {
             $reflectionObject = new \ReflectionObject($object);
