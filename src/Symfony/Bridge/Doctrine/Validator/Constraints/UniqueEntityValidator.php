@@ -11,9 +11,11 @@
 
 namespace Symfony\Bridge\Doctrine\Validator\Constraints;
 
+use Doctrine\ORM\Mapping\MappingException as ORMMappingException;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
+use Doctrine\Persistence\Mapping\MappingException as PersistenceMappingException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
