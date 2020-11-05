@@ -81,11 +81,7 @@ class UniqueEntityValidator extends ConstraintValidator
                 throw new ConstraintDefinitionException(sprintf('Object manager "%s" does not exist.', $constraint->em));
             }
         } else {
-            if (null !== $constraint->entityClass) {
-                $em = $this->registry->getManagerForClass($constraint->entityClass);
-            } else {
-                $em = $this->registry->getManagerForClass($entityClass);
-            }
+            $em = $this->registry->getManagerForClass($constraint->entityClass ?? $entityClass);
 
             if (!$em) {
                 throw new ConstraintDefinitionException(sprintf('Unable to find the object manager associated with an entity of class "%s".', get_debug_type($object)));
@@ -206,18 +202,18 @@ class UniqueEntityValidator extends ConstraintValidator
 
             $fieldValues = $this->getFieldValues($object, $class, $identifierFieldNames);
             if (array_values($class->getIdentifierFieldNames()) != array_values($identifierFieldNames)) {
-                throw new ConstraintDefinitionException(sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $constraint->entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames)));
+                throw new ConstraintDefinitionException(sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames)));
             }
 
             $entityMatched = true;
 
             foreach ($identifierFieldNames as $identifierFieldName) {
-                $field = new \ReflectionProperty($constraint->entityClass, $identifierFieldName);
+                $field = new \ReflectionProperty($entityClass, $identifierFieldName);
                 if (!$field->isPublic()) {
                     $field->setAccessible(true);
                 }
 
-                $propertyValue = $this->getPropertyValue($constraint->entityClass, $identifierFieldName, current($result));
+                $propertyValue = $this->getPropertyValue($entityClass, $identifierFieldName, current($result));
                 if ($fieldValues[$identifierFieldName] !== $propertyValue) {
                     $entityMatched = false;
                     break;
