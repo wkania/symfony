@@ -1132,7 +1132,6 @@ class UniqueEntityValidatorTest extends ConstraintValidatorTestCase
         $this->em->persist($entity);
         $this->em->flush();
 
-
         $dto = new UpdateCompositeObjectNoToStringIdEntity($objectOne, $objectTwo, 'Foo');
         $this->validator->validate($dto, $constraint);
     }
