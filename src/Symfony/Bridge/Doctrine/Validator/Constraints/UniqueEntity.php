@@ -13,7 +13,7 @@ namespace Symfony\Bridge\Doctrine\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraint;
 
-/*
+/**
  * Constraint for the Unique Entity validator.
  *
  * @Annotation
@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraint;
  *
  * @author Benjamin Eberlei <kontakt@beberlei.de>
  */
-#[Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 class UniqueEntity extends Constraint
 {
     public const NOT_UNIQUE_ERROR = '23bd9dbf-6b9b-41cd-a99e-4844bcf3077f';
