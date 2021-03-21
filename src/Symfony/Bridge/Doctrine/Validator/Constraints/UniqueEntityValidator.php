@@ -39,12 +39,12 @@ class UniqueEntityValidator extends ConstraintValidator
     }
 
     /**
-     * @param mixed $object
+     * @param mixed $value
      *
      * @throws UnexpectedTypeException
      * @throws ConstraintDefinitionException
      */
-    public function validate(mixed $object, Constraint $constraint)
+    public function validate(mixed $value, Constraint $constraint)
     {
         if (!$constraint instanceof UniqueEntity) {
             throw new UnexpectedTypeException($constraint, UniqueEntity::class);
@@ -64,15 +64,15 @@ class UniqueEntityValidator extends ConstraintValidator
             throw new ConstraintDefinitionException('At least one field has to be specified.');
         }
 
-        if (null === $object) {
+        if (null === $value) {
             return;
         }
 
-        if (!\is_object($object)) {
-            throw new UnexpectedValueException($object, 'object');
+        if (!\is_object($value)) {
+            throw new UnexpectedValueException($value, 'object');
         }
 
-        $entityClass = \get_class($object);
+        $entityClass = \get_class($value);
 
         if ($constraint->em) {
             $em = $this->registry->getManager($constraint->em);
@@ -84,7 +84,7 @@ class UniqueEntityValidator extends ConstraintValidator
             $em = $this->registry->getManagerForClass($constraint->entityClass ?? $entityClass);
 
             if (!$em) {
-                throw new ConstraintDefinitionException(sprintf('Unable to find the object manager associated with an entity of class "%s".', get_debug_type($object)));
+                throw new ConstraintDefinitionException(sprintf('Unable to find the object manager associated with an entity of class "%s".', get_debug_type($value)));
             }
         }
 
@@ -103,7 +103,7 @@ class UniqueEntityValidator extends ConstraintValidator
             $repository = $em->getRepository($constraint->entityClass);
             $supportedClass = $repository->getClassName();
 
-            if ($isEntity && !$object instanceof $supportedClass) {
+            if ($isEntity && !$value instanceof $supportedClass) {
                 $class = $em->getClassMetadata($entityClass);
                 throw new ConstraintDefinitionException(sprintf('The "%s" entity repository does not support the "%s" entity. The entity should be an instance of or extend "%s".', $constraint->entityClass, $class->getName(), $supportedClass));
             }
@@ -115,7 +115,7 @@ class UniqueEntityValidator extends ConstraintValidator
         $criteria = [];
         $hasNullValue = false;
 
-        $fieldValues = $this->getFieldValues($object, $class, $fields, $isEntity);
+        $fieldValues = $this->getFieldValues($value, $class, $fields, $isEntity);
 
         foreach ($fieldValues as $entityFieldName => $fieldValue) {
             if (null === $fieldValue) {
@@ -186,7 +186,7 @@ class UniqueEntityValidator extends ConstraintValidator
          * which is the same as the entity being validated, the criteria is
          * unique.
          */
-        if (!$result || (1 === \count($result) && current($result) === $object)) {
+        if (!$result || (1 === \count($result) && current($result) === $value)) {
             return;
         }
 
@@ -200,7 +200,7 @@ class UniqueEntityValidator extends ConstraintValidator
 
             $identifierFieldNames = (array) $constraint->identifierFieldNames;
 
-            $fieldValues = $this->getFieldValues($object, $class, $identifierFieldNames);
+            $fieldValues = $this->getFieldValues($value, $class, $identifierFieldNames);
             if (array_values($class->getIdentifierFieldNames()) != array_values($identifierFieldNames)) {
                 throw new ConstraintDefinitionException(sprintf('The "%s" entity identifier field names should be "%s", not "%s".', $entityClass, implode(', ', $class->getIdentifierFieldNames()), implode(', ', $constraint->identifierFieldNames)));
             }
