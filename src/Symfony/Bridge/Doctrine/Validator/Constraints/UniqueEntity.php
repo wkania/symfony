@@ -59,7 +59,7 @@ class UniqueEntity extends Constraint
         string $repositoryMethod = null,
         string $errorPath = null,
         bool $ignoreNull = null,
-        $identifierFieldNames = null,
+        array $identifierFieldNames = null,
         array $groups = null,
         $payload = null,
         array $options = []

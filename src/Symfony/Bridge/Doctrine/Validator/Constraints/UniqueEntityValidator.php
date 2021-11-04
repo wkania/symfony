@@ -238,6 +238,7 @@ class UniqueEntityValidator extends ConstraintValidator
     }
 
     private function formatWithIdentifiers(ObjectManager $em, ClassMetadata $class, mixed $value)
+    private function formatWithIdentifiers(ObjectManager $em, ClassMetadata $class, $value): string
     {
         if (!\is_object($value) || $value instanceof \DateTimeInterface) {
             return $this->formatValue($value, self::PRETTY_DATE);
@@ -248,11 +249,11 @@ class UniqueEntityValidator extends ConstraintValidator
         }
 
         if ($class->getName() !== $idClass = \get_class($value)) {
-            // non unique value might be a composite PK that consists of other entity objects
+            // non-unique value might be a composite PK that consists of other entity objects
             if ($em->getMetadataFactory()->hasMetadataFor($idClass)) {
                 $identifiers = $em->getClassMetadata($idClass)->getIdentifierValues($value);
             } else {
-                // this case might happen if the non unique column has a custom doctrine type and its value is an object
+                // this case might happen if the non-unique column has a custom doctrine type and its value is an object
                 // in which case we cannot get any identifiers for it
                 $identifiers = [];
             }
@@ -304,7 +305,10 @@ class UniqueEntityValidator extends ConstraintValidator
         return $fieldValues;
     }
 
-    public function getPropertyValue($class, $name, $object)
+    /**
+     * @return mixed
+     */
+    public function getPropertyValue(string $class, string $name, $object)
     {
         $property = new \ReflectionProperty($class, $name);
         if (!$property->isPublic()) {
