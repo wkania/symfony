@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `#[MapEntity]` with its corresponding `EntityValueResolver`
  * Add `NAME` constant to `UlidType` and `UuidType`
+ * Allow validating every class against `UniqueEntity` constraint
 
 6.0
 ---
