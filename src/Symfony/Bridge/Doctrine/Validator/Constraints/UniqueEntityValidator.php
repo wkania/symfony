@@ -305,14 +305,16 @@ class UniqueEntityValidator extends ConstraintValidator
         return $fieldValues;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getPropertyValue(string $class, string $name, $object)
+    public function getPropertyValue(string $class, string $name, $object): mixed
     {
         $property = new \ReflectionProperty($class, $name);
+
         if (!$property->isPublic()) {
             $property->setAccessible(true);
+        }
+
+        if (!$property->isInitialized($object)) {
+            return null;
         }
 
         return $property->getValue($object);
